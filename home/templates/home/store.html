@@ -1,0 +1,279 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YourChoice - Online Shopping</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'home/ecommerce.css' %}">
+</head>
+<body class="store-body">
+
+    <!-- ============ Header ============ -->
+    <header class="shop-header">
+        <div class="header-main">
+            <a href="{% url 'store' %}" class="shop-logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Your<span class="logo-accent">Choice</span></span>
+            </a>
+
+            <form class="search-bar" action="{% url 'store' %}" method="GET">
+                <select name="category" class="search-category">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.slug }}" {% if current_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="q" placeholder="Search products..." value="{{ query|default:'' }}">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
+
+            <div class="header-actions">
+                {% if user.is_authenticated %}
+                <a href="{% url 'seller_dashboard' %}" class="sell-btn">
+                    <i class="fas fa-store-alt"></i>
+                    <span>Sell</span>
+                </a>
+                <div class="user-menu">
+                    <a href="{% url 'order_history' %}" class="header-action">
+                        <i class="fas fa-user"></i>
+                        <span>Hello, {{ user.username }}<br><small>Your Orders</small></span>
+                    </a>
+                    <div class="user-dropdown">
+                        <a href="{% url 'seller_dashboard' %}"><i class="fas fa-store"></i> Seller Dashboard</a>
+                        <a href="{% url 'order_history' %}"><i class="fas fa-box"></i> My Orders</a>
+                        <a href="{% url 'user_settings' %}"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+                {% else %}
+                <a href="{% url 'login' %}" class="header-action">
+                    <i class="fas fa-user"></i>
+                    <span>Hello, Sign in<br><small>Account & Lists</small></span>
+                </a>
+                {% endif %}
+
+                <a href="{% url 'cart' %}" class="header-action cart-action">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" id="cartCount">0</span>
+                    <span>Cart</span>
+                </a>
+            </div>
+        </div>
+
+        <nav class="header-nav">
+            <div class="nav-categories">
+                <button class="all-btn"><i class="fas fa-bars"></i> Categories</button>
+                {% for cat in categories|slice:":8" %}
+                <a href="{% url 'store' %}?category={{ cat.slug }}">{{ cat.name }}</a>
+                {% endfor %}
+            </div>
+            <div class="nav-deals">
+                <a href="{% url 'store' %}?sort=price_low">Today's Deals</a>
+                <a href="{% url 'seller_dashboard' %}">Become a Seller</a>
+                <a href="{% url 'store' %}?sort=newest">New Releases</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============ Messages ============ -->
+    {% if messages %}
+    <div class="message-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+            {{ message }}
+            <button class="alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ============ Hero Banner ============ -->
+    <section class="store-hero">
+        <div class="hero-slide active" style="background: linear-gradient(135deg, #232f3e 0%, #37475a 100%);">
+            <div class="hero-content">
+                <h1>Your Choice <span>Mega Sale</span></h1>
+                <p>Shop the latest electronics, fashion, home & more</p>
+                <a href="{% url 'store' %}?sort=price_low" class="shop-now-btn">Shop Now <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="hero-icons">
+                <i class="fas fa-laptop"></i>
+                <i class="fas fa-tshirt"></i>
+                <i class="fas fa-home"></i>
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ Featured Products ============ -->
+    {% if featured_products %}
+    <section class="product-section">
+        <div class="section-header">
+            <h2>🔥 Featured Products</h2>
+            <a href="{% url 'store' %}">See all <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="product-grid">
+            {% for product in featured_products %}
+            <div class="product-card">
+                <a href="{% url 'product_detail' product.slug %}" class="product-image">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <div class="no-image"><i class="fas fa-box-open"></i></div>
+                    {% endif %}
+                    {% if product.get_discount_percentage %}
+                    <span class="discount-badge">-{{ product.get_discount_percentage }}%</span>
+                    {% endif %}
+                </a>
+                <div class="product-info">
+                    <h3><a href="{% url 'product_detail' product.slug %}">{{ product.name|truncatechars:40 }}</a></h3>
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <span>{{ product.rating }}</span>
+                        <span class="reviews">({{ product.reviews_count }})</span>
+                    </div>
+                    <div class="product-price">
+                        <span class="price">Rs. {{ product.price }}</span>
+                        {% if product.original_price %}
+                        <span class="original-price">Rs. {{ product.original_price }}</span>
+                        {% endif %}
+                    </div>
+                    <form action="{% url 'add_to_cart' product.id %}" method="POST" class="add-to-cart-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="add-cart-btn" {% if product.stock == 0 %}disabled{% endif %}>
+                            {% if product.stock == 0 %}Out of Stock{% else %}<i class="fas fa-cart-plus"></i> Add to Cart{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ============ All Products ============ -->
+    <section class="product-section">
+        <div class="section-header">
+            <h2>All Products</h2>
+            <div class="sort-menu">
+                <span>Sort by:</span>
+                <select onchange="window.location.href='?{% if query %}q={{ query }}&{% endif %}{% if current_category %}category={{ current_category }}&{% endif %}sort='+this.value" class="sort-select">
+                    <option value="" {% if not current_sort %}selected{% endif %}>Featured</option>
+                    <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Top Rated</option>
+                    <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="category-chips">
+            <a href="{% url 'store' %}" class="chip {% if not current_category %}active{% endif %}">All</a>
+            {% for cat in categories %}
+            <a href="{% url 'store' %}?category={{ cat.slug }}" class="chip {% if current_category == cat.slug %}active{% endif %}">{{ cat.name }}</a>
+            {% endfor %}
+        </div>
+
+        {% if products %}
+        <div class="product-grid">
+            {% for product in products %}
+            <div class="product-card">
+                <a href="{% url 'product_detail' product.slug %}" class="product-image">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <div class="no-image"><i class="fas fa-box-open"></i></div>
+                    {% endif %}
+                    {% if product.get_discount_percentage %}
+                    <span class="discount-badge">-{{ product.get_discount_percentage }}%</span>
+                    {% endif %}
+                </a>
+                <div class="product-info">
+                    <h3><a href="{% url 'product_detail' product.slug %}">{{ product.name|truncatechars:40 }}</a></h3>
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <span>{{ product.rating }}</span>
+                        <span class="reviews">({{ product.reviews_count }})</span>
+                    </div>
+                    <div class="product-price">
+                        <span class="price">Rs. {{ product.price }}</span>
+                        {% if product.original_price %}
+                        <span class="original-price">Rs. {{ product.original_price }}</span>
+                        {% endif %}
+                    </div>
+                    <form action="{% url 'add_to_cart' product.id %}" method="POST" class="add-to-cart-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="add-cart-btn" {% if product.stock == 0 %}disabled{% endif %}>
+                            {% if product.stock == 0 %}Out of Stock{% else %}<i class="fas fa-cart-plus"></i> Add to Cart{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h3>No products found</h3>
+            <p>Try adjusting your search or filter to find what you're looking for.</p>
+            <a href="{% url 'store' %}" class="btn-primary">Clear Filters</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- ============ Footer ============ -->
+    <footer class="shop-footer">
+        <div class="footer-top">
+            <a href="#top" class="back-top-btn">Back to top</a>
+        </div>
+        <div class="footer-content">
+            <div class="footer-col">
+                <h4>Get to Know Us</h4>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Press Releases</a></li>
+                    <li><a href="#">YourChoice Science</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Let Us Help You</h4>
+                <ul>
+                    <li><a href="#">Your Account</a></li>
+                    <li><a href="#">Your Orders</a></li>
+                    <li><a href="#">Shipping Rates</a></li>
+                    <li><a href="#">Returns</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Make Money with Us</h4>
+                <ul>
+                    <li><a href="{% url 'seller_dashboard' %}">Sell on YourChoice</a></li>
+                    <li><a href="{% url 'seller_dashboard' %}">Become a Seller</a></li>
+                    <li><a href="#">Advertise Your Products</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Connect with Us</h4>
+                <ul>
+                    <li><a href="#"><i class="fab fa-facebook"></i> Facebook</a></li>
+                    <li><a href="#"><i class="fab fa-twitter"></i> Twitter</a></li>
+                    <li><a href="#"><i class="fab fa-instagram"></i> Instagram</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 YourChoice. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="{% static 'home/ecommerce.js' %}"></script>
+</body>
+</html>

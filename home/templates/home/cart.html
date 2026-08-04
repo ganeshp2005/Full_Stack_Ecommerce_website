@@ -1,0 +1,143 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - NexaMart</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'home/ecommerce.css' %}">
+</head>
+<body class="store-body">
+
+    <header class="shop-header">
+        <div class="header-main">
+            <a href="{% url 'store' %}" class="shop-logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Nexa<span class="logo-accent">Mart</span></span>
+            </a>
+            <div class="header-actions">
+                {% if user.is_authenticated %}
+                <a href="{% url 'order_history' %}" class="header-action"><i class="fas fa-user"></i><span>Hello, {{ user.username }}<br><small>Your Orders</small></span></a>
+                {% else %}
+                <a href="{% url 'login' %}" class="header-action"><i class="fas fa-user"></i><span>Hello, Sign in<br><small>Account & Lists</small></span></a>
+                {% endif %}
+                <a href="{% url 'cart' %}" class="header-action"><i class="fas fa-shopping-cart"></i><span class="cart-count" id="cartCount">{{ cart.total_items }}</span><span>Cart</span></a>
+            </div>
+        </div>
+    </header>
+
+    {% include 'home/partials/messages.html' %}
+
+    <div class="breadcrumb">
+        <a href="{% url 'store' %}">Home</a> <i class="fas fa-chevron-right"></i>
+        <span>Shopping Cart</span>
+    </div>
+
+    <div class="cart-container">
+        <div class="cart-main">
+            <div class="cart-header">
+                <h1>Shopping Cart</h1>
+                <span>{{ cart.total_items }} item(s)</span>
+            </div>
+
+            {% if cart_items %}
+            <div class="cart-items-list">
+                {% for item in cart_items %}
+                <div class="cart-item">
+                    <a href="{% url 'product_detail' item.product.slug %}" class="cart-item-image">
+                        {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                        {% else %}
+                        <div class="no-image"><i class="fas fa-box-open"></i></div>
+                        {% endif %}
+                    </a>
+                    <div class="cart-item-info">
+                        <h3><a href="{% url 'product_detail' item.product.slug %}">{{ item.product.name }}</a></h3>
+                        <p class="cart-item-desc">{{ item.product.description|truncatechars:80 }}</p>
+                        <div class="cart-item-meta">
+                            <span class="item-status {% if item.product.stock > 0 %}in-stock{% else %}out-stock{% endif %}">
+                                {% if item.product.stock > 0 %}<i class="fas fa-check-circle"></i> In Stock{% else %}<i class="fas fa-times-circle"></i> Out of Stock{% endif %}
+                            </span>
+                            <span class="item-ship">Eligible for FREE shipping</span>
+                        </div>
+                        <div class="cart-item-actions">
+                            <form action="{% url 'update_cart_item' item.id %}" method="POST" class="cart-qty-form">
+                                {% csrf_token %}
+                                <div class="qty-selector">
+                                    <button type="button" class="qty-btn minus" onclick="changeQty(this)">−</button>
+                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" onchange="this.form.submit()">
+                                    <button type="button" class="qty-btn plus" onclick="changeQty(this)">+</button>
+                                </div>
+                            </form>
+                            <form action="{% url 'remove_from_cart' item.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="delete-btn">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="cart-item-price">
+                        <strong>Rs. {{ item.subtotal }}</strong>
+                        {% if item.product.original_price %}
+                        <span class="old-price">Rs. {{ item.product.original_price }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="cart-subtotal-bar">
+                <span>Subtotal ({{ cart.total_items }} items):</span>
+                <strong>Rs. {{ subtotal }}</strong>
+            </div>
+            {% else %}
+            <div class="empty-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <h2>Your NexaMart Cart is empty</h2>
+                <p>You have no items in your shopping cart.</p>
+                <a href="{% url 'store' %}" class="btn-primary">Shop Today's Deals</a>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if cart_items %}
+        <div class="cart-sidebar">
+            <div class="price-details">
+                <h3>Price Details</h3>
+                <div class="price-row"><span>Price ({{ cart.total_items }} items)</span><span>Rs. {{ subtotal }}</span></div>
+                <div class="price-row"><span>Delivery Charges</span><span>{% if subtotal >= 499 %}<span class="free-tag">FREE</span>{% else %}Rs. 49{% endif %}</span></div>
+                <div class="price-row total"><span>Amount Payable</span><span>Rs. {% if subtotal >= 499 %}{{ subtotal }}{% else %}{{ subtotal|add:49 }}{% endif %}</span></div>
+            </div>
+            <div class="secure-note">
+                <i class="fas fa-shield-alt"></i> Safe & Secure Payment
+            </div>
+            <a href="{% url 'checkout' %}" class="checkout-btn">Proceed to Checkout</a>
+            <a href="{% url 'store' %}" class="continue-btn"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="shop-footer">
+        <div class="footer-top"><a href="#top" class="back-top-btn">Back to top</a></div>
+        <div class="footer-bottom"><p>&copy; 2026 NexaMart. All rights reserved.</p></div>
+    </footer>
+
+    <script>
+        function changeQty(btn) {
+            var selector = btn.closest('.qty-selector');
+            var input = selector.querySelector('input[name="quantity"]');
+            var val = parseInt(input.value);
+            if (btn.classList.contains('minus')) val--;
+            else val++;
+            var max = parseInt(input.max);
+            if (val < 1) val = 1;
+            if (val > max) val = max;
+            input.value = val;
+            input.closest('form').submit();
+        }
+    </script>
+    <script src="{% static 'home/ecommerce.js' %}"></script>
+</body>
+</html>

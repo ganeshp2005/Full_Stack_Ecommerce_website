@@ -1,0 +1,149 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard - YourChoice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'home/ecommerce.css' %}">
+</head>
+<body class="store-body">
+
+    <header class="shop-header">
+        <div class="header-main">
+            <a href="{% url 'store' %}" class="shop-logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Your<span class="logo-accent">Choice</span></span>
+            </a>
+            <a href="{% url 'store' %}" class="header-action"><i class="fas fa-store"></i><span>Store</span></a>
+            <a href="{% url 'cart' %}" class="header-action"><i class="fas fa-shopping-cart"></i><span class="cart-count">0</span><span>Cart</span></a>
+            <a href="{% url 'logout' %}" class="header-action"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+        </div>
+    </header>
+
+    {% include 'home/partials/messages.html' %}
+
+    <div class="seller-dashboard">
+        <div class="seller-header">
+            <h1><i class="fas fa-store"></i> Seller Dashboard</h1>
+            <p>Welcome, <strong>{{ request.user.username }}</strong>! Manage your products and track your sales.</p>
+            <a href="{% url 'seller_add_product' %}" class="btn-primary"><i class="fas fa-plus"></i> Add New Product</a>
+        </div>
+
+        <div class="seller-stats">
+            <div class="stat-card">
+                <i class="fas fa-box-open"></i>
+                <div>
+                    <strong>{{ product_count }}</strong>
+                    <span>My Products</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-shopping-cart"></i>
+                <div>
+                    <strong>{{ total_orders }}</strong>
+                    <span>Total Sales</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-rupee-sign"></i>
+                <div>
+                    <strong>Rs. {{ total_sales }}</strong>
+                    <span>Revenue Earned</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="seller-section">
+            <h2>My Products</h2>
+            {% if my_products %}
+            <table class="seller-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in my_products %}
+                    <tr>
+                        <td class="product-cell">
+                            {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                            {% else %}
+                            <div class="no-image small"><i class="fas fa-box-open"></i></div>
+                            {% endif %}
+                            <span>{{ product.name|truncatechars:40 }}</span>
+                        </td>
+                        <td>Rs. {{ product.price }}</td>
+                        <td>{{ product.stock }}</td>
+                        <td>
+                            {% if product.is_active %}
+                            <span class="status-pill" style="background:#d4edda;color:#155724;">Active</span>
+                            {% else %}
+                            <span class="status-pill" style="background:#f8d7da;color:#721c24;">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="action-cell">
+                            <a href="{% url 'seller_edit_product' product.id %}" class="action-btn edit"><i class="fas fa-edit"></i> Edit</a>
+                            <a href="{% url 'seller_delete_product' product.id %}" class="action-btn delete"><i class="fas fa-trash"></i> Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-orders">
+                <i class="fas fa-box-open"></i>
+                <h3>You haven't listed any products yet</h3>
+                <p>Start selling by adding your first product!</p>
+                <a href="{% url 'seller_add_product' %}" class="btn-primary"><i class="fas fa-plus"></i> Add Your First Product</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="seller-section">
+            <h2>Recent Sales</h2>
+            {% if my_orders %}
+            <table class="seller-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in my_orders|slice:":10" %}
+                    <tr>
+                        <td>{{ item.order.order_id }}</td>
+                        <td>{{ item.product_name|truncatechars:35 }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>Rs. {{ item.subtotal }}</td>
+                        <td>{{ item.order.created_at|date:"d M Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="no-sales">No sales yet. Share your products to start getting orders!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer class="shop-footer">
+        <div class="footer-bottom"><p>&copy; 2026 YourChoice. All rights reserved.</p></div>
+    </footer>
+
+    <script src="{% static 'home/ecommerce.js' %}"></script>
+</body>
+</html>

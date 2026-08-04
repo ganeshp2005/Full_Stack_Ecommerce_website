@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Orders - NexaMart</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'home/ecommerce.css' %}">
+</head>
+<body class="store-body">
+
+    <header class="shop-header">
+        <div class="header-main">
+            <a href="{% url 'store' %}" class="shop-logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Nexa<span class="logo-accent">Mart</span></span>
+            </a>
+            <div class="header-actions">
+                <a href="{% url 'store' %}" class="header-action"><i class="fas fa-store"></i><span>Store</span></a>
+                <a href="{% url 'cart' %}" class="header-action"><i class="fas fa-shopping-cart"></i><span class="cart-count">0</span><span>Cart</span></a>
+                <a href="{% url 'logout' %}" class="header-action"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+            </div>
+        </div>
+    </header>
+
+    {% include 'home/partials/messages.html' %}
+
+    <div class="orders-container">
+        <h1>Your Orders</h1>
+
+        {% if orders %}
+        <div class="orders-list">
+            {% for order in orders %}
+            <div class="order-card">
+                <div class="order-card-header">
+                    <div>
+                        <span class="order-label">ORDER PLACED</span>
+                        <strong>{{ order.created_at|date:"d M Y" }}</strong>
+                    </div>
+                    <div>
+                        <span class="order-label">TOTAL</span>
+                        <strong>Rs. {{ order.total }}</strong>
+                    </div>
+                    <div>
+                        <span class="order-label">SHIP TO</span>
+                        <strong>{{ order.full_name }}</strong>
+                    </div>
+                    <div class="order-id">
+                        <span class="order-label">ORDER #</span>
+                        <strong>{{ order.order_id }}</strong>
+                    </div>
+                    <div>
+                        <span class="order-label">STATUS</span>
+                        <span class="status-pill status-{{ order.status }}">{{ order.get_status_display }}</span>
+                    </div>
+                </div>
+                <div class="order-card-body">
+                    {% for item in order.items.all %}
+                    <div class="order-item-row">
+                        <div class="order-item-img">
+                            {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}">
+                            {% else %}
+                            <div class="no-image small"><i class="fas fa-box-open"></i></div>
+                            {% endif %}
+                        </div>
+                        <div class="order-item-info">
+                            <strong>{{ item.product_name }}</strong>
+                            <span>Qty: {{ item.quantity }} · Rs. {{ item.subtotal }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-orders">
+            <i class="fas fa-box-open"></i>
+            <h2>No orders yet</h2>
+            <p>You haven't placed any orders yet. Start shopping!</p>
+            <a href="{% url 'store' %}" class="btn-primary">Start Shopping</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="{% static 'home/ecommerce.js' %}"></script>
+</body>
+</html>

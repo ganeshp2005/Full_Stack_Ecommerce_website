@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - YourChoice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'home/ecommerce.css' %}">
+</head>
+<body class="store-body">
+
+    <header class="shop-header">
+        <div class="header-main">
+            <a href="{% url 'store' %}" class="shop-logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Your<span class="logo-accent">Choice</span></span>
+            </a>
+            <a href="{% url 'seller_dashboard' %}" class="header-action"><i class="fas fa-arrow-left"></i><span>Dashboard</span></a>
+            <a href="{% url 'store' %}" class="header-action"><i class="fas fa-store"></i><span>Store</span></a>
+        </div>
+    </header>
+
+    {% include 'home/partials/messages.html' %}
+
+    <div class="seller-form-container">
+        <h1><i class="fas fa-plus-circle"></i> List a New Product</h1>
+        <p class="form-subtitle">Fill in the details below to add your product to the YourChoice store.</p>
+
+        <form method="POST" enctype="multipart/form-data" class="seller-form">
+            {% csrf_token %}
+
+            <div class="form-section">
+                <h2>Product Information</h2>
+                <div class="checkout-field">
+                    <label for="{{ form.name.id_for_label }}">Product Name *</label>
+                    {{ form.name }}
+                </div>
+                <div class="checkout-field">
+                    <label for="{{ form.category.id_for_label }}">Category *</label>
+                    {{ form.category }}
+                    <small class="form-hint">Choose the most suitable category for your product</small>
+                </div>
+                <div class="checkout-field">
+                    <label for="{{ form.description.id_for_label }}">Description *</label>
+                    {{ form.description }}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Pricing & Stock</h2>
+                <div class="form-row-2">
+                    <div class="checkout-field">
+                        <label for="{{ form.price.id_for_label }}">Selling Price (Rs.) *</label>
+                        {{ form.price }}
+                    </div>
+                    <div class="checkout-field">
+                        <label for="{{ form.original_price.id_for_label }}">Original Price (Rs.)</label>
+                        {{ form.original_price }}
+                    </div>
+                </div>
+                <div class="checkout-field">
+                    <label for="{{ form.stock.id_for_label }}">Quantity in Stock *</label>
+                    {{ form.stock }}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Product Image</h2>
+                <div class="checkout-field">
+                    <label for="{{ form.image.id_for_label }}">Upload Image</label>
+                    {{ form.image }}
+                    <small class="form-hint">Upload a clear product photo (JPG, PNG, etc.)</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary"><i class="fas fa-check"></i> Publish Product</button>
+                <a href="{% url 'seller_dashboard' %}" class="btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <footer class="shop-footer">
+        <div class="footer-bottom"><p>&copy; 2026 YourChoice. All rights reserved.</p></div>
+    </footer>
+
+    <script src="{% static 'home/ecommerce.js' %}"></script>
+</body>
+</html>

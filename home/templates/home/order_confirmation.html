@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed - NexaMart</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'home/ecommerce.css' %}">
+</head>
+<body class="store-body">
+
+    <header class="shop-header">
+        <div class="header-main">
+            <a href="{% url 'store' %}" class="shop-logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Nexa<span class="logo-accent">Mart</span></span>
+            </a>
+            <a href="{% url 'store' %}" class="header-action"><i class="fas fa-home"></i><span>Home</span></a>
+        </div>
+    </header>
+
+    {% include 'home/partials/messages.html' %}
+
+    <div class="order-success">
+        <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+        <h1>Thank you for your order!</h1>
+        <p>Order confirmation has been sent to <strong>{{ order.email }}</strong></p>
+
+        <div class="order-id-box">
+            <span>Order ID:</span>
+            <strong>{{ order.order_id }}</strong>
+        </div>
+
+        <div class="order-details">
+            <div class="order-detail-card">
+                <h3>Order Summary</h3>
+                <div class="order-info">
+                    <div class="order-info-row"><span>Placed on</span><span>{{ order.created_at|date:"d M Y, h:i A" }}</span></div>
+                    <div class="order-info-row"><span>Total</span><strong>Rs. {{ order.total }}</strong></div>
+                    <div class="order-info-row"><span>Payment</span><span>{{ order.get_payment_method_display }}</span></div>
+                    <div class="order-info-row"><span>Status</span><span class="status-pill">{{ order.get_status_display }}</span></div>
+                </div>
+            </div>
+            <div class="order-detail-card">
+                <h3>Shipping Address</h3>
+                <p>
+                    <strong>{{ order.full_name }}</strong><br>
+                    {{ order.address }}<br>
+                    {{ order.city }}, {{ order.state }} - {{ order.pincode }}<br>
+                    Phone: {{ order.phone }}
+                </p>
+            </div>
+        </div>
+
+        <div class="order-items">
+            <h3>Items in this order</h3>
+            {% for item in order.items.all %}
+            <div class="order-item">
+                <div class="order-item-name">{{ item.product_name }} × {{ item.quantity }}</div>
+                <div class="order-item-price">Rs. {{ item.subtotal }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="success-actions">
+            <a href="{% url 'order_history' %}" class="btn-primary">View My Orders</a>
+            <a href="{% url 'store' %}" class="btn-outline">Continue Shopping</a>
+        </div>
+    </div>
+
+    <script src="{% static 'home/ecommerce.js' %}"></script>
+</body>
+</html>

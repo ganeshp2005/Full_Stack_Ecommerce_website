@@ -1,0 +1,149 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} - NexaMart</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'home/ecommerce.css' %}">
+</head>
+<body class="store-body">
+
+    <header class="shop-header">
+        <div class="header-main">
+            <a href="{% url 'store' %}" class="shop-logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Nexa<span class="logo-accent">Mart</span></span>
+            </a>
+            <form class="search-bar" action="{% url 'store' %}" method="GET">
+                <select name="category" class="search-category">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}<option value="{{ cat.slug }}">{{ cat.name }}</option>{% endfor %}
+                </select>
+                <input type="text" name="q" placeholder="Search products...">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
+            <div class="header-actions">
+                {% if user.is_authenticated %}
+                <a href="{% url 'order_history' %}" class="header-action"><i class="fas fa-user"></i><span>Hello, {{ user.username }}<br><small>Your Orders</small></span></a>
+                {% else %}
+                <a href="{% url 'login' %}" class="header-action"><i class="fas fa-user"></i><span>Hello, Sign in<br><small>Account & Lists</small></span></a>
+                {% endif %}
+                <a href="{% url 'cart' %}" class="header-action"><i class="fas fa-shopping-cart"></i><span class="cart-count" id="cartCount">0</span><span>Cart</span></a>
+            </div>
+        </div>
+    </header>
+
+    {% include 'home/partials/messages.html' %}
+
+    <div class="breadcrumb">
+        <a href="{% url 'store' %}">Home</a> <i class="fas fa-chevron-right"></i>
+        <a href="{% url 'store' %}?category={{ product.category.slug }}">{{ product.category.name }}</a> <i class="fas fa-chevron-right"></i>
+        <span>{{ product.name|truncatechars:30 }}</span>
+    </div>
+
+    <section class="product-detail">
+        <div class="detail-image">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            {% else %}
+            <div class="no-image large"><i class="fas fa-box-open"></i></div>
+            {% endif %}
+        </div>
+        <div class="detail-info">
+            <h1>{{ product.name }}</h1>
+            <div class="detail-rating">
+                <div class="stars">
+                    {% for i in "12345" %}<i class="fas fa-star {% if forloop.counter <= product.rating %}filled{% else %}empty{% endif %}"></i>{% endfor %}
+                </div>
+                <span>{{ product.rating }} · {{ product.reviews_count }} ratings</span>
+            </div>
+            <hr>
+            <div class="detail-price-section">
+                {% if product.original_price %}
+                <div class="detail-price">
+                    <span class="new-price">Rs. {{ product.price }}</span>
+                    <span class="old-price">Rs. {{ product.original_price }}</span>
+                    <span class="save-price">You save Rs. {{ product.original_price|add:"-"|default:product.original_price }}</span>
+                </div>
+                {% else %}
+                <div class="detail-price"><span class="new-price">Rs. {{ product.price }}</span></div>
+                {% endif %}
+            </div>
+            <div class="detail-stock">
+                {% if product.stock > 0 %}
+                <span class="in-stock"><i class="fas fa-check-circle"></i> In Stock</span>
+                {% else %}
+                <span class="out-stock"><i class="fas fa-times-circle"></i> Out of Stock</span>
+                {% endif %}
+                <span class="stock-count">{{ product.stock }} items available</span>
+            </div>
+            <p class="detail-description">{{ product.description }}</p>
+            <div class="detail-actions">
+                <form action="{% url 'add_to_cart' product.id %}" method="POST">
+                    {% csrf_token %}
+                    <div class="qty-selector">
+                        <button type="button" class="qty-btn minus" onclick="changeQty(-1)">−</button>
+                        <input type="number" name="quantity" id="qty" value="1" min="1" max="{{ product.stock }}">
+                        <button type="button" class="qty-btn plus" onclick="changeQty(1)">+</button>
+                    </div>
+                    <button type="submit" class="add-cart-lg" {% if product.stock == 0 %}disabled{% endif %}>
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </form>
+            </div>
+            <div class="detail-badges">
+                <div><i class="fas fa-truck"></i> Free Delivery</div>
+                <div><i class="fas fa-undo"></i> 7-Day Returns</div>
+                <div><i class="fas fa-shield-alt"></i> Secure Payment</div>
+            </div>
+        </div>
+    </section>
+
+    {% if related_products %}
+    <section class="product-section">
+        <div class="section-header"><h2>Related Products</h2></div>
+        <div class="product-grid">
+            {% for product in related_products %}
+            <div class="product-card">
+                <a href="{% url 'product_detail' product.slug %}" class="product-image">
+                    {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}">{% else %}<div class="no-image"><i class="fas fa-box-open"></i></div>{% endif %}
+                    {% if product.get_discount_percentage %}<span class="discount-badge">-{{ product.get_discount_percentage }}%</span>{% endif %}
+                </a>
+                <div class="product-info">
+                    <h3><a href="{% url 'product_detail' product.slug %}">{{ product.name|truncatechars:40 }}</a></h3>
+                    <div class="rating"><i class="fas fa-star"></i><span>{{ product.rating }}</span></div>
+                    <div class="product-price"><span class="price">Rs. {{ product.price }}</span>{% if product.original_price %}<span class="original-price">Rs. {{ product.original_price }}</span>{% endif %}</div>
+                    <form action="{% url 'add_to_cart' product.id %}" method="POST">
+                        {% csrf_token %}<input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="add-cart-btn" {% if product.stock == 0 %}disabled{% endif %}>{% if product.stock == 0 %}Out of Stock{% else %}<i class="fas fa-cart-plus"></i> Add to Cart{% endif %}</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <footer class="shop-footer">
+        <div class="footer-top"><a href="#top" class="back-top-btn">Back to top</a></div>
+        <div class="footer-bottom"><p>&copy; 2026 NexaMart. All rights reserved.</p></div>
+    </footer>
+
+    <script>
+        function changeQty(delta) {
+            var input = document.getElementById('qty');
+            var val = parseInt(input.value) + delta;
+            var max = parseInt(input.max);
+            if (val < 1) val = 1;
+            if (val > max) val = max;
+            input.value = val;
+        }
+    </script>
+    <script src="{% static 'home/ecommerce.js' %}"></script>
+</body>
+</html>

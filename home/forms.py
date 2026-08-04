@@ -4,7 +4,15 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import Product, Category
 
 
-class UserRegisterForm(UserCreationForm):
+class CustomUserCreationForm(UserCreationForm):
+    """UserCreationForm without password validation restrictions"""
+
+    def _post_clean(self):
+        # Skip the password validation entirely - allow any password
+        super(UserCreationForm, self)._post_clean()
+
+
+class UserRegisterForm(CustomUserCreationForm):
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={

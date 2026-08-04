@@ -1,5 +1,5 @@
 /* ============================================
-   NexaMart - E-Commerce Interactive Features
+   YourChoice - E-Commerce Interactive Features
    ============================================ */
 
 document.addEventListener('DOMContentLoaded', function () {

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - NexaMart</title>
+    <title>Login - YourChoice</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
     <div class="auth-container">
         <a href="{% url 'store' %}" class="auth-logo">
             <i class="fas fa-shopping-bag"></i>
-            <span>Nexa<span class="logo-accent">Mart</span></span>
+            <span>Your<span class="logo-accent">Choice</span></span>
         </a>
 
         {% if messages %}
@@ -44,15 +44,15 @@
             </form>
 
             <p class="auth-terms">
-                By continuing, you agree to NexaMart's <a href="#">Conditions of Use</a> and <a href="#">Privacy Notice</a>.
+                By continuing, you agree to YourChoice's <a href="#">Conditions of Use</a> and <a href="#">Privacy Notice</a>.
             </p>
         </div>
 
         <div class="auth-divider">
-            <span>New to NexaMart?</span>
+            <span>New to YourChoice?</span>
         </div>
 
-        <a href="{% url 'register' %}" class="auth-create-btn">Create your NexaMart account</a>
+        <a href="{% url 'register' %}" class="auth-create-btn">Create your YourChoice account</a>
         <a href="{% url 'store' %}" class="auth-back"><i class="fas fa-arrow-left"></i> Back to Shopping</a>
     </div>
 

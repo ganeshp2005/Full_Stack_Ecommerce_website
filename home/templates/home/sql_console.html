@@ -1,0 +1,304 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Terminal & Database Explorer | YourChoice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'home/ecommerce.css' %}">
+</head>
+<body class="sql-console-body">
+    <!-- Canvas background animation -->
+    <canvas id="sqlParticlesCanvas" class="sql-particles"></canvas>
+
+    <!-- Header -->
+    <header class="shop-header">
+        <div class="header-main">
+            <a href="{% url 'store' %}" class="shop-logo">
+                <i class="fas fa-database text-gradient"></i>
+                <span>Your<span class="logo-accent">Choice</span> <small class="badge-sql">SQL Console</small></span>
+            </a>
+
+            <div class="sql-header-stats">
+                <div class="sql-stat-chip"><i class="fas fa-server"></i> Engine: <span>SQLite3</span></div>
+                <div class="sql-stat-chip"><i class="fas fa-table"></i> Tables: <span>{{ tables|length }}</span></div>
+                <div class="sql-stat-chip"><i class="fas fa-bolt"></i> Speed: <span>{{ execution_time }} ms</span></div>
+            </div>
+
+            <div class="header-actions">
+                <a href="{% url 'store' %}" class="btn-glow-outline"><i class="fas fa-store"></i> Return to Store</a>
+                <a href="{% url 'seller_dashboard' %}" class="btn-glow-outline"><i class="fas fa-chart-line"></i> Dashboard</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="sql-container">
+        
+        <!-- Sidebar Schema Inspector -->
+        <aside class="sql-sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-layer-group"></i> Database Tables</h3>
+                <span class="pulse-dot" title="Live Database Connection Active"></span>
+            </div>
+            
+            <div class="tables-list">
+                {% for tbl in tables %}
+                <div class="table-item" onclick="insertTableQuery('{{ tbl.name }}')">
+                    <div class="table-item-name">
+                        <i class="fas fa-table"></i>
+                        <span>{{ tbl.name }}</span>
+                    </div>
+                    <span class="table-row-count">{{ tbl.count }} rows</span>
+                </div>
+                {% empty %}
+                <div class="empty-tables">No tables found</div>
+                {% endfor %}
+            </div>
+
+            <div class="presets-section">
+                <h3><i class="fas fa-wand-magic-sparkles"></i> Quick Presets</h3>
+                <div class="presets-grid">
+                    {% for preset in presets %}
+                    <button type="button" class="preset-btn" onclick="setPresetQuery(`{{ preset.sql|escapejs }}`)">
+                        <i class="fas {{ preset.icon }}"></i>
+                        <span>{{ preset.name }}</span>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Query & Output Studio -->
+        <main class="sql-main">
+            
+            <!-- SQL Input Card -->
+            <div class="sql-card terminal-card">
+                <div class="terminal-bar">
+                    <div class="terminal-dots">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                    </div>
+                    <div class="terminal-title"><i class="fas fa-terminal"></i> Interactive SQL Query Terminal</div>
+                    <div class="terminal-actions">
+                        <button type="button" onclick="clearQuery()" class="terminal-btn" title="Clear Editor"><i class="fas fa-eraser"></i> Clear</button>
+                    </div>
+                </div>
+
+                <form method="POST" action="{% url 'sql_console' %}" id="sqlForm">
+                    {% csrf_token %}
+                    <div class="code-editor-container">
+                        <textarea name="query" id="sqlEditor" spellcheck="false" placeholder="Type your SQL query here... (e.g. SELECT * FROM home_product;)">{{ query }}</textarea>
+                    </div>
+                    <div class="terminal-footer">
+                        <div class="quick-hints">
+                            <span><i class="fas fa-lightbulb"></i> Tip: Select any table on the left or click a preset to auto-fill.</span>
+                        </div>
+                        <div class="terminal-controls">
+                            <button type="button" onclick="formatSQL()" class="btn-secondary-glow"><i class="fas fa-align-left"></i> Format</button>
+                            <button type="submit" class="btn-primary-glow"><i class="fas fa-play"></i> Execute Query</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Execution Status Bar -->
+            {% if query %}
+            <div class="sql-metrics-bar">
+                <div class="metric-item">
+                    <i class="fas fa-check-circle text-success"></i>
+                    <span>Status: <strong>{% if error %}Query Error{% else %}Success{% endif %}</strong></span>
+                </div>
+                <div class="metric-item">
+                    <i class="fas fa-list-ol"></i>
+                    <span>Rows: <strong>{{ row_count }}</strong></span>
+                </div>
+                <div class="metric-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Execution Time: <strong>{{ execution_time }} ms</strong></span>
+                </div>
+                {% if results %}
+                <div class="metric-item export-item">
+                    <button onclick="exportTableToCSV()" class="btn-small-glow"><i class="fas fa-file-export"></i> Export CSV</button>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Error Notification -->
+            {% if error %}
+            <div class="sql-error-alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div class="error-details">
+                    <strong>SQL Execution Error:</strong>
+                    <code>{{ error }}</code>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Output Results Table -->
+            <div class="sql-card results-card">
+                <div class="results-header">
+                    <h3><i class="fas fa-table-cells"></i> Query Result Set</h3>
+                    {% if results %}
+                    <span class="badge-results">{{ results|length }} Record(s) Returned</span>
+                    {% endif %}
+                </div>
+
+                {% if results %}
+                <div class="table-responsive">
+                    <table class="sql-results-table" id="sqlDataTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                {% for col in columns %}
+                                <th>{{ col }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in results %}
+                            <tr>
+                                <td class="row-num">{{ forloop.counter }}</td>
+                                {% for val in row %}
+                                <td>
+                                    {% if val is None %}
+                                    <span class="null-val">NULL</span>
+                                    {% else %}
+                                    {{ val }}
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                {% if not error %}
+                <div class="sql-empty-state">
+                    <i class="fas fa-code"></i>
+                    <h4>Ready to execute SQL query</h4>
+                    <p>Enter an SQL statement above or select a preset query to explore your SQLite database.</p>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Interactive SQL Canvas & Interactive Script -->
+    <script>
+        function insertTableQuery(tableName) {
+            const editor = document.getElementById('sqlEditor');
+            editor.value = `SELECT * FROM "${tableName}" LIMIT 20;`;
+            editor.focus();
+        }
+
+        function setPresetQuery(sql) {
+            const editor = document.getElementById('sqlEditor');
+            editor.value = sql;
+            document.getElementById('sqlForm').submit();
+        }
+
+        function clearQuery() {
+            document.getElementById('sqlEditor').value = '';
+            document.getElementById('sqlEditor').focus();
+        }
+
+        function formatSQL() {
+            let editor = document.getElementById('sqlEditor');
+            let val = editor.value;
+            val = val.replace(/\s+/g, ' ')
+                     .replace(/\bSELECT\b/gi, '\nSELECT')
+                     .replace(/\bFROM\b/gi, '\nFROM')
+                     .replace(/\bWHERE\b/gi, '\nWHERE')
+                     .replace(/\bORDER BY\b/gi, '\nORDER BY')
+                     .replace(/\bGROUP BY\b/gi, '\nGROUP BY')
+                     .replace(/\bLIMIT\b/gi, '\nLIMIT')
+                     .replace(/\bJOIN\b/gi, '\nJOIN')
+                     .trim();
+            editor.value = val;
+        }
+
+        function exportTableToCSV() {
+            const table = document.getElementById('sqlDataTable');
+            if(!table) return;
+
+            let csv = [];
+            let rows = table.querySelectorAll('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll('td, th');
+                for (let j = 0; j < cols.length; j++) {
+                    let text = cols[j].innerText.replace(/"/g, '""');
+                    row.push('"' + text + '"');
+                }
+                csv.push(row.join(','));
+            }
+
+            let csvFile = new Blob([csv.join('\n')], {type: 'text/csv'});
+            let downloadLink = document.createElement('a');
+            downloadLink.download = 'sql_query_result_' + new Date().getTime() + '.csv';
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // Particle background graphics
+        const canvas = document.getElementById('sqlParticlesCanvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const particles = [];
+            for (let i = 0; i < 40; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    size: Math.random() * 2 + 1,
+                    alpha: Math.random() * 0.5 + 0.2
+                });
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, width, height);
+                ctx.fillStyle = 'rgba(99, 102, 241, 0.4)';
+                
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0) p.x = width;
+                    if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height;
+                    if (p.y > height) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+        }
+    </script>
+</body>
+</html>

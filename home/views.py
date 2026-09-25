@@ -1,3 +1,5 @@
+import time
+from django.db import connection
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
@@ -382,3 +384,69 @@ def user_settings(request):
         return redirect('user_settings')
 
     return render(request, 'home/settings.html', {'profile': profile})
+
+
+# ============ SQL Command Console View ============
+def sql_console(request):
+    """Interactive SQL Command Console to view database schema and execute custom SQL commands live."""
+    query = request.POST.get('query', request.GET.get('query', 'SELECT * FROM home_product LIMIT 10;')).strip()
+    results = None
+    columns = []
+    error = None
+    execution_time = 0
+    row_count = 0
+
+    # Get schema tables and their row counts for schema browser
+    table_info = []
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name;")
+            tables = [row[0] for row in cursor.fetchall()]
+            for tbl in tables:
+                cursor.execute(f"SELECT COUNT(*) FROM \"{tbl}\";")
+                cnt = cursor.fetchone()[0]
+                table_info.append({'name': tbl, 'count': cnt})
+    except Exception as e:
+        table_info = []
+
+    # Preset sample SQL queries
+    presets = [
+        {"name": "📦 All Products", "icon": "fa-boxes", "sql": "SELECT id, name, price, stock, rating FROM home_product ORDER BY id DESC LIMIT 15;"},
+        {"name": "📁 Categories", "icon": "fa-folder", "sql": "SELECT id, name, slug FROM home_category;"},
+        {"name": "👤 Registered Users", "icon": "fa-users", "sql": "SELECT id, username, email, is_staff, date_joined FROM auth_user;"},
+        {"name": "🛒 Customer Orders", "icon": "fa-shopping-bag", "sql": "SELECT order_id, full_name, total, payment_method, status, created_at FROM home_order ORDER BY created_at DESC;"},
+        {"name": "🔥 Top Rated Products", "icon": "fa-star", "sql": "SELECT name, price, rating, discount_percent FROM home_product WHERE rating >= 4.5 ORDER BY rating DESC;"},
+        {"name": "📊 Stock & Category Analytics", "icon": "fa-chart-pie", "sql": "SELECT c.name as category, COUNT(p.id) as total_products, SUM(p.stock) as total_stock, ROUND(AVG(p.price), 2) as avg_price FROM home_category c LEFT JOIN home_product p ON c.id = p.category_id GROUP BY c.id;"},
+        {"name": "🗄️ Database Tables Schema", "icon": "fa-database", "sql": "SELECT name, type, sql FROM sqlite_master WHERE type='table' ORDER BY name;"},
+        {"name": "⚡ User Profiles & Settings", "icon": "fa-sliders-h", "sql": "SELECT u.username, p.theme, p.font_size, p.color_scheme FROM auth_user u JOIN home_userprofile p ON u.id = p.user_id;"},
+    ]
+
+    if query:
+        start_time = time.time()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                if cursor.description:
+                    columns = [col[0] for col in cursor.description]
+                    results = cursor.fetchall()
+                    row_count = len(results)
+                else:
+                    row_count = cursor.rowcount if cursor.rowcount >= 0 else 0
+                    columns = ["Status"]
+                    results = [(f"SQL statement executed successfully. Rows affected: {row_count}",)]
+        except Exception as e:
+            error = str(e)
+        execution_time = round((time.time() - start_time) * 1000, 2)
+
+    context = {
+        'query': query,
+        'columns': columns,
+        'results': results,
+        'error': error,
+        'row_count': row_count,
+        'execution_time': execution_time,
+        'tables': table_info,
+        'presets': presets,
+    }
+    return render(request, 'home/sql_console.html', context)
+

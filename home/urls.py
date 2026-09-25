@@ -30,4 +30,8 @@ urlpatterns = [
 
     # User Settings
     path('settings/', views.user_settings, name='user_settings'),
+
+    # Interactive SQL Console & Database Explorer
+    path('sql-console/', views.sql_console, name='sql_console'),
 ]
+

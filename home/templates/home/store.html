@@ -33,6 +33,10 @@
             </form>
 
             <div class="header-actions">
+                <a href="{% url 'sql_console' %}" class="btn-glow-sql">
+                    <i class="fas fa-terminal"></i>
+                    <span>SQL Console</span>
+                </a>
                 {% if user.is_authenticated %}
                 <a href="{% url 'seller_dashboard' %}" class="sell-btn">
                     <i class="fas fa-store-alt"></i>
@@ -44,6 +48,7 @@
                         <span>Hello, {{ user.username }}<br><small>Your Orders</small></span>
                     </a>
                     <div class="user-dropdown">
+                        <a href="{% url 'sql_console' %}"><i class="fas fa-database"></i> SQL Database Explorer</a>
                         <a href="{% url 'seller_dashboard' %}"><i class="fas fa-store"></i> Seller Dashboard</a>
                         <a href="{% url 'order_history' %}"><i class="fas fa-box"></i> My Orders</a>
                         <a href="{% url 'user_settings' %}"><i class="fas fa-cog"></i> Settings</a>
@@ -73,6 +78,7 @@
                 {% endfor %}
             </div>
             <div class="nav-deals">
+                <a href="{% url 'sql_console' %}" style="color: #a855f7; font-weight: bold;"><i class="fas fa-terminal"></i> SQL Query Console</a>
                 <a href="{% url 'store' %}?sort=price_low">Today's Deals</a>
                 <a href="{% url 'seller_dashboard' %}">Become a Seller</a>
                 <a href="{% url 'store' %}?sort=newest">New Releases</a>
